@@ -1,0 +1,48 @@
+
+name: Build Nova Engine APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'NovaEngine (1).zip'
+      - '.github/workflows/main.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Extract Nova Engine
+        run: |
+          mkdir project
+          unzip -q "NovaEngine (1).zip" -d project
+          ls -la project
+          ls -la project/android
+
+      - name: Install Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q gradle-8.7-bin.zip
+          echo "$GITHUB_WORKSPACE/gradle-8.7/bin" >> "$GITHUB_PATH"
+
+      - name: Build APK
+        run: gradle --no-daemon -p project/android assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovaEngine-APK
+          path: project/android/app/build/outputs/apk/debug/*.apk
